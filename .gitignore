@@ -1,0 +1,10 @@
+# IDEs e Editores
+.idea/
+*.iml
+.vscode/
+
+# Sistema Operativo e Ficheiros Temporários
+.DS_Store
+Thumbs.db
+node_modules/
+*.log
