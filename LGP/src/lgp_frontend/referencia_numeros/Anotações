@@ -1,0 +1,27 @@
+O Protocolo de Teste
+
+1. A Falha da Bounding Box
+Ao testarmos a Caixa Delimitadora (Bounding Box) como fator de normalização, verificámos que a transição anatómica
+de uma mão aberta para um punho fechado provoca uma quebra drástica na referência (ex: de 480 para 220 píxeis).
+Se utilizássemos este diferencial como escala, o algoritmo aplicaria uma dilatação compensatória errada aos pontos tridimensionais,que destoi a geometria real do gesto.
+Em contraste, a Euclidiana que tem no segmento Pulso-Dedo Médio (Pontos 0 a 9) mantém-se inalterada, pois baseia-se numa estrutura óssea imune ao encolhimento.
+
+2. A Falha de Manhattan
+Ao aplicarmos a Distância de Manhattan, comprovámos que a simples rotação do pulso a 45 graus ,mantendo a profundidade e a distância focal da câmara
+idênticas, introduz um erro matemático artificial que inflaciona o tamanho aparente da mão. Isto acontece porque a geometria em grelha penaliza fortemente vetores diagonais.
+O método Euclidiano é a nossa única escolha porque garante invariância rotacional,que mede o vetor exato em linha reta, ignorando completamente a inclinação
+ou a perspetiva no plano da câmara.
+
+
+1. O que tínhamos antes (O Problema do DTW)
+DTW Clássico: O algoritmo calcularDTW antigo comparava todos os frames do utilizador com todos os frames do molde guardado. Isto tem uma complexidade
+de $O(N^2)$, o que é pesado e permitia "alinhamentos patológicos" (ex: o algoritmo achava que 2 frames em que a mão esteve parada equivaliam a 45 frames de um movimento
+fluido).
+
+Falta de Contexto Espacial (Semântica): A função calcularDistanciaEntreDuasMaos apenas comparava as coordenadas das articulações da mão. Ou seja, um aceno acima da cabeça
+e um aceno ao pé da cintura pareciam iguais para o sistema, porque ele não sabia onde a mão estava em relação ao corpo.
+
+Avaliação Cega: O sistema não sabia bem quando um gesto começava e acabava. Estava constantemente a avaliar buffers temporais, sem perceber a intenção do utilizador.
+
+Gravação Imediata: Ao premir a tecla R para gravar um gesto novo, começava logo a gravar, o que significava que gravava os frames da sua mão a carregar no teclado e a
+voltar para trás, sujando o molde do gesto.

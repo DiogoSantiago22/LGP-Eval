@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LGP-Eval | Motor Biométrico</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container">
+    <h1>LGP-Eval</h1>
+
+    <!-- ===== MENU PRINCIPAL ===== -->
+    <div id="view-menu-principal">
+        <div class="grid-menu-principal">
+            <button class="btn-menu btn-aprendizagem" onclick="abrirMenuAprendizagem()">
+                <span class="btn-icon">🎓</span>
+                Aprendizagem
+            </button>
+            <button class="btn-menu btn-avaliacao" onclick="abrirMenuAvaliacao()">
+                <span class="btn-icon">📋</span>
+                Avaliação
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== MENU APRENDIZAGEM ===== -->
+    <div id="view-menu-aprendizagem" style="display: none;">
+        <div style="display: flex; justify-content: flex-start; max-width: 500px; margin: 0 auto 10px auto;">
+            <button class="btn-voltar" onclick="voltarAoMenuPrincipal()">← Voltar</button>
+        </div>
+        <h2>Aprendizagem</h2>
+        <div class="grid-menu-sub">
+            <button class="btn-menu btn-numeros" onclick="abrirMenuNumerosAprendizagem()">
+                <span class="btn-icon">🔢</span>
+                Números<br><small>(0–9)</small>
+            </button>
+            <button class="btn-menu btn-letras" onclick="abrirMenuLetrasAprendizagem()">
+                <span class="btn-icon">🔤</span>
+                Abecedário<br><small>(A–Z)</small>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== MENU AVALIAÇÃO ===== -->
+    <div id="view-menu-avaliacao" style="display: none;">
+        <div style="display: flex; justify-content: flex-start; max-width: 600px; margin: 0 auto 10px auto;">
+            <button class="btn-voltar" onclick="voltarAoMenuPrincipal()">← Voltar</button>
+        </div>
+        <h2>Avaliação</h2>
+        <div class="grid-menu-avaliacao">
+            <button class="btn-menu btn-numeros" onclick="abrirMenuNumerosAvaliacao()">
+                <span class="btn-icon">🔢</span>
+                Avaliação<br>Números
+            </button>
+            <button class="btn-menu btn-letras" onclick="abrirMenuLetrasAvaliacao()">
+                <span class="btn-icon">🔤</span>
+                Avaliação<br>Letras
+            </button>
+            <button class="btn-menu btn-estatica" onclick="abrirModoLivre()">
+                <span class="btn-icon">✋</span>
+                Avaliação<br>Estática
+            </button>
+            <button class="btn-menu btn-dinamica" onclick="abrirModoDinamico()">
+                <span class="btn-icon">🤸</span>
+                Avaliação<br>Dinâmica
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== SUBMENU NÚMEROS (APRENDIZAGEM) ===== -->
+    <div id="view-menu-numeros-aprendizagem" style="display: none;">
+        <div style="display: flex; justify-content: flex-start; max-width: 500px; margin: 0 auto 10px auto;">
+            <button class="btn-voltar" onclick="voltarParaAprendizagem()">← Voltar</button>
+        </div>
+        <h2>Que número queres aprender?</h2>
+        <div class="grid-botoes">
+            <button class="btn-numero" onclick="iniciarTreino('Numero_0')">0</button>
+            <button class="btn-numero" onclick="iniciarTreino('Numero_1')">1</button>
+            <button class="btn-numero" onclick="iniciarTreino('Numero_2')">2</button>
+            <button class="btn-numero" onclick="iniciarTreino('Numero_3')">3</button>
+            <button class="btn-numero" onclick="iniciarTreino('Numero_4')">4</button>
+            <button class="btn-numero" onclick="iniciarTreino('Numero_5')">5</button>
+            <button class="btn-numero" onclick="iniciarTreino('Numero_6')">6</button>
+            <button class="btn-numero" onclick="iniciarTreino('Numero_7')">7</button>
+            <button class="btn-numero" onclick="iniciarTreino('Numero_8')">8</button>
+            <button class="btn-numero" onclick="iniciarTreino('Numero_9')">9</button>
+        </div>
+    </div>
+
+    <!-- ===== SUBMENU LETRAS (APRENDIZAGEM) ===== -->
+    <div id="view-menu-letras-aprendizagem" style="display: none;">
+        <div style="display: flex; justify-content: flex-start; max-width: 600px; margin: 0 auto 10px auto;">
+            <button class="btn-voltar" onclick="voltarParaAprendizagem()">← Voltar</button>
+        </div>
+        <h2>Que letra queres aprender?</h2>
+        <div class="grid-botoes grid-letras">
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_A')">A</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_B')">B</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_C')">C</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_D')">D</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_E')">E</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_F')">F</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_G')">G</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_H')">H</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_I')">I</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_J')">J</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_K')">K</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_L')">L</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_M')">M</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_N')">N</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_O')">O</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_P')">P</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_Q')">Q</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_R')">R</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_S')">S</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_T')">T</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_U')">U</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_V')">V</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_W')">W</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_X')">X</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_Y')">Y</button>
+            <button class="btn-numero btn-letra" onclick="iniciarTreino('Letra_Z')">Z</button>
+        </div>
+    </div>
+
+    <!-- ===== SUBMENU NÚMEROS (AVALIAÇÃO) ===== -->
+    <div id="view-menu-numeros-avaliacao" style="display: none;">
+        <div style="display: flex; justify-content: flex-start; max-width: 500px; margin: 0 auto 10px auto;">
+            <button class="btn-voltar" onclick="voltarParaAvaliacao()">← Voltar</button>
+        </div>
+        <h2>Que número queres avaliar?</h2>
+        <div class="grid-botoes">
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_0')">0</button>
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_1')">1</button>
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_2')">2</button>
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_3')">3</button>
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_4')">4</button>
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_5')">5</button>
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_6')">6</button>
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_7')">7</button>
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_8')">8</button>
+            <button class="btn-numero btn-aval" onclick="iniciarAvaliacao('Numero_9')">9</button>
+        </div>
+    </div>
+
+    <!-- ===== SUBMENU LETRAS (AVALIAÇÃO) ===== -->
+    <div id="view-menu-letras-avaliacao" style="display: none;">
+        <div style="display: flex; justify-content: flex-start; max-width: 600px; margin: 0 auto 10px auto;">
+            <button class="btn-voltar" onclick="voltarParaAvaliacao()">← Voltar</button>
+        </div>
+        <h2>Que letra queres avaliar?</h2>
+        <div class="grid-botoes grid-letras">
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_A')">A</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_B')">B</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_C')">C</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_D')">D</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_E')">E</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_F')">F</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_G')">G</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_H')">H</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_I')">I</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_J')">J</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_K')">K</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_L')">L</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_M')">M</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_N')">N</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_O')">O</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_P')">P</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_Q')">Q</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_R')">R</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_S')">S</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_T')">T</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_U')">U</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_V')">V</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_W')">W</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_X')">X</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_Y')">Y</button>
+            <button class="btn-numero btn-aval btn-letra" onclick="iniciarAvaliacao('Letra_Z')">Z</button>
+        </div>
+    </div>
+
+    <!-- ===== MODAL DEFINIÇÕES ===== -->
+    <div id="modal-definicoes" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: #222; padding: 25px; border-radius: 12px; border: 2px solid #555; width: 90%; max-width: 400px; color: white; box-shadow: 0px 10px 30px rgba(0,0,0,0.5);">
+            <h3 style="margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; text-align: center;">⚙ Ajudas Visuais</h3>
+            <div style="margin: 20px 0;">
+                <label style="display: flex; align-items: center; margin-bottom: 15px; cursor: pointer; font-size: 16px;">
+                    <input type="checkbox" id="toggle-zonas" checked style="transform: scale(1.5); margin-right: 15px;">
+                    Mostrar Zonas do Corpo
+                </label>
+                <label style="display: flex; align-items: center; margin-bottom: 15px; cursor: pointer; font-size: 16px;">
+                    <input type="checkbox" id="toggle-fantasma" checked style="transform: scale(1.5); margin-right: 15px;">
+                    Mostrar Esqueleto Fantasma
+                </label>
+                <label style="display: flex; align-items: center; margin-bottom: 15px; cursor: pointer; font-size: 16px;">
+                    <input type="checkbox" id="toggle-bussola" checked style="transform: scale(1.5); margin-right: 15px;">
+                    Mostrar Bússola de Inclinação
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer; font-size: 16px;">
+                    <input type="checkbox" id="toggle-imagem" checked style="transform: scale(1.5); margin-right: 15px;">
+                    Mostrar Fotografia do Gesto
+                </label>
+            </div>
+            <button onclick="fecharDefinicoes()" style="background-color: #2196F3; width: 100%; color: white; padding: 12px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                Guardar e Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== VISTA CÂMARA ===== -->
+    <div id="view-camara" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; max-width: 640px; margin-left: auto; margin-right: auto;">
+            <button class="btn-voltar" style="margin: 0; padding: 5px 15px;" onclick="voltarAoMenu()">← Sair</button>
+            <h2 id="titulo-gesto" style="margin: 0; font-size: 22px; flex-grow: 1; text-align: center;">...</h2>
+            <button id="btn-definicoes-camara" onclick="abrirDefinicoes()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: white; display: none;" title="Definições de Ajuda">⚙</button>
+        </div>
+
+        <div class="video-wrapper" style="position: relative; display: inline-block;">
+            <video class="input_video" autoplay playsinline></video>
+            <canvas class="output_canvas"></canvas>
+
+            <div id="cartao-referencia" style="position: absolute; top: 15px; right: 15px; width: 120px; border: 3px solid #4CAF50; border-radius: 8px; background: #fff; overflow: hidden; display: none; box-shadow: 0px 4px 10px rgba(0,0,0,0.5); z-index: 100;">
+                <div style="background: #4CAF50; color: white; text-align: center; font-size: 12px; padding: 4px; font-weight: bold;">Como fazer:</div>
+                <img id="img-referencia" src="" alt="Gesto de Referência" style="width: 100%; display: block;">
+            </div>
+        </div>
+
+        <div id="painel-progresso" style="display: none; max-width: 640px; margin: 5px auto 0 auto;">
+            <div id="alerta-dedo" style="font-size: 20px; font-weight: bold; color: #FF3333; margin-bottom: 2px; height: 24px;"></div>
+
+            <div style="background-color: rgba(255,255,255,0.1); width: 100%; height: 24px; border-radius: 8px; border: 2px solid #fff; position: relative; overflow: hidden;">
+                <div id="barra-enchimento" style="width: 0%; height: 100%; background-color: #FF3333; transition: width 0.1s linear, background-color 0.2s;"></div>
+                <div id="texto-barra" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; line-height: 24px; text-align: center; font-weight: bold; font-size: 16px; color: white; text-shadow: 1px 1px 2px black;">A aguardar...</div>
+            </div>
+
+            <div id="texto-debug" style="margin-top: 5px; font-family: monospace; color: #888; font-size: 12px;">
+                Erro: --% | Ângulo: --º / --º
+            </div>
+        </div>
+
+        <div id="status" style="margin-top: 5px; font-size: 14px;">A aguardar câmara...</div>
+    </div>
+</div>
+
+<div id="painel-telemetria" style="display: none; position: absolute; left: 15px; top: 15px; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; font-family: monospace; z-index: 10; min-width: 250px;">
+    <h3 style="margin-top: 0; font-size: 16px; border-bottom: 1px solid #555; padding-bottom: 5px; color: #4CAF50;">Diagnóstico Livre</h3>
+    <ul id="lista-resultados" style="list-style: none; padding: 0; margin: 0; font-size: 14px; line-height: 1.6;">
+        <li>A aguardar avaliação...</li>
+    </ul>
+</div>
+
+<script src="math.js"></script>
+<script src="calibracao.js"></script>
+<script src="referenciaDTW/base_dados_dinamica.js"></script>
+<script src="app2.js"></script>
+<script src="referencia.js"></script>
+</body>
+</html>

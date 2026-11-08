@@ -1,0 +1,175 @@
+body {
+    background-color: #1e1e1e;
+    color: white;
+    font-family: sans-serif;
+    text-align: center;
+}
+
+.container {
+    margin-top: 30px;
+}
+
+/* ===== MENU PRINCIPAL ===== */
+.grid-menu-principal {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    max-width: 500px;
+    margin: 40px auto;
+}
+
+.grid-menu-sub {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    max-width: 500px;
+    margin: 30px auto;
+}
+
+.grid-menu-avaliacao {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 440px;
+    margin: 30px auto;
+}
+
+.btn-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    height: 130px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    transition: transform 0.2s, filter 0.2s;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    line-height: 1.4;
+}
+
+.btn-menu:hover {
+    transform: scale(1.07);
+    filter: brightness(1.15);
+}
+
+.btn-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.btn-aprendizagem { background-color: #4CAF50; }
+.btn-avaliacao    { background-color: #2196F3; }
+.btn-numeros      { background-color: #4CAF50; }
+.btn-letras       { background-color: #9C27B0; }
+.btn-estatica     { background-color: #FF9800; }
+.btn-dinamica     { background-color: #F44336; }
+
+/* ===== GRELHA DE NÚMEROS/LETRAS ===== */
+.grid-botoes {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    max-width: 500px;
+    margin: 20px auto;
+}
+
+.grid-letras {
+    grid-template-columns: repeat(7, 1fr);
+    max-width: 600px;
+}
+
+.btn-numero {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 18px 10px;
+    font-size: 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.15s, background-color 0.2s;
+    font-weight: bold;
+}
+
+.btn-numero:hover {
+    background-color: #45a049;
+    transform: scale(1.1);
+}
+
+/* Letras em roxo */
+.btn-letra {
+    background-color: #9C27B0;
+    font-size: 18px;
+    padding: 14px 6px;
+}
+
+.btn-letra:hover {
+    background-color: #7B1FA2;
+}
+
+/* Botões de avaliação em azul */
+.btn-aval {
+    background-color: #1565C0;
+}
+
+.btn-aval:hover {
+    background-color: #0D47A1;
+}
+
+/* Botão voltar */
+.btn-voltar {
+    background-color: #555;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s;
+}
+
+.btn-voltar:hover {
+    background-color: #777;
+}
+
+/* ===== CÂMARA ===== */
+.video-wrapper {
+    position: relative;
+    width: 640px;
+    height: 480px;
+    margin: 0 auto;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.input_video {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    transform: scaleX(-1);
+}
+
+.output_canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 10;
+    transform: scaleX(-1);
+}
+
+#status {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #ff9800;
+}
+
+#painel-treino {
+    flex-direction: column;
+    align-items: center;
+}
