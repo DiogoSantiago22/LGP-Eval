@@ -844,7 +844,7 @@ function iniciarTreino(nomeGesto) {
             } else if (nomeBaseGesto.startsWith("Letra")) {
                 subPasta = "abcedario/";
             }
-            imgRef.src = `referenciaphotos/${subPasta}${nomeBaseGesto}.png`;
+            imgRef.src = `./referencia/referenciaphotos/${subPasta}${nomeBaseGesto}.png`;
             cartaoRef.style.display = 'block';
         } else {
             cartaoRef.style.display = 'none';

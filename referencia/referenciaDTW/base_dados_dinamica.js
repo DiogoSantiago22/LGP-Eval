@@ -8,13 +8,11 @@ const GESTOS_DINAMICOS_A_CARREGAR = [
     "Branco_v5",
     "Dor_v1",
     "Dor_v2",
-    "Dor_v3",
     "Fixe_v1",
     "Fixe_v2",
     "Mascara_v1",
     "Mascara_v2",
 
-    "Letra_D",
     "Letra_K",
     "Letra_W",
     "Letra_Y",
@@ -27,8 +25,7 @@ async function carregarReferenciasDinamicas() {
     for (const nomeGesto of GESTOS_DINAMICOS_A_CARREGAR) {
         try {
             const cacheBuster = new Date().getTime();
-            //mudamos o caminho para a nova pasta
-            const caminhoFicheiro = `./referenciaDTW/${nomeGesto}_dinamico.json?v=${cacheBuster}`;
+            const caminhoFicheiro = `./referencia/referenciaDTW/${nomeGesto}_dinamico.json?v=${cacheBuster}`;
 
             const resposta = await fetch(caminhoFicheiro);
             if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);

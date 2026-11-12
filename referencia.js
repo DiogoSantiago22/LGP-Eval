@@ -3,14 +3,14 @@ let BASE_DADOS_REFERENCIAS = [];
 // Números (pasta: referencia_numeros/)
 const NUMEROS_A_CARREGAR = [
     "Numero_0", "Numero_0_V1", "Numero_0_V2",
-    "Numero_1", "Numero_1_V1", "Numero_1_V2",
-    "Numero_2", "Numero_2_V1", "Numero_2_V2",
+    "Numero_1_V1", "Numero_1_V2",
+    "Numero_2_V1", "Numero_2_V2",
     "Numero_3", "Numero_3_V1", "Numero_3_V2",
     "Numero_4", "Numero_4_V1", "Numero_4_V2",
     "Numero_5", "Numero_5_V1", "Numero_5_V2",
     "Numero_6", "Numero_6_V1", "Numero_6_V2",
-    "Numero_7", "Numero_7_V1", "Numero_7_V2", "Numero_7_V3",
-    "Numero_8", "Numero_8_V1", "Numero_8_V2",
+    "Numero_7",  "Numero_7_V3",
+    "Numero_8",  "Numero_8_V2",
     "Numero_9", "Numero_9_V1", "Numero_9_V2"
 ];
 
@@ -26,8 +26,7 @@ const LETRAS_ESTATICAS = [
     "Letra_X",
 
     // V1
-    "Letra_A_V1",  "Letra_C_V1",
-    "Letra_G_V1", "Letra_H_V1", "Letra_I_V1",
+     "Letra_H_V1", "Letra_I_V1",
      "Letra_L_V1", "Letra_M_V1", "Letra_N_V1",
     "Letra_O_V1",  "Letra_Q_V1", "Letra_R_V1",
     "Letra_S_V1", "Letra_U_V1", "Letra_V_V1",
@@ -40,7 +39,7 @@ const LETRAS_DINAMICAS = ["Letra_D", "Letra_K", "Letra_W", "Letra_Y", "Letra_Z"]
 async function carregarFicheiro(nomeGesto, pasta) {
     try {
         const cacheBuster = new Date().getTime();
-        const caminho = `./${pasta}/${nomeGesto}_template.json?v=${cacheBuster}`;
+        const caminho = `./referencia/${pasta}/${nomeGesto}_template.json?v=${cacheBuster}`;
         const resposta = await fetch(caminho);
         if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
         const json = await resposta.json();
