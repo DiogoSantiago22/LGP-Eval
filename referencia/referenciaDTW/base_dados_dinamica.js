@@ -13,7 +13,6 @@ const GESTOS_DINAMICOS_A_CARREGAR = [
     "Fixe_v2",
     "Mascara_v1",
     "Mascara_v2",
-
     "Letra_D",
     "Letra_K",
     "Letra_W",
@@ -27,17 +26,15 @@ async function carregarReferenciasDinamicas() {
     for (const nomeGesto of GESTOS_DINAMICOS_A_CARREGAR) {
         try {
             const cacheBuster = new Date().getTime();
-            //mudamos o caminho para a nova pasta
             const caminhoFicheiro = `./referenciaDTW/${nomeGesto}_dinamico.json?v=${cacheBuster}`;
 
             const resposta = await fetch(caminhoFicheiro);
             if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
 
             const jsonDinamico = await resposta.json();
-
             BASE_DADOS_DINAMICA.push(jsonDinamico);
 
-            // Diagnóstico de formato: v1 (mão) | v2 (mão + zona + corpo) | v3 (+ distRelFace[5])
+            // Formato: v1 (mão) | v2 (mão + zona + corpo) | v3 (+ distRelFace[5])
             const versao      = jsonDinamico.versao_formato || 1;
             const temZonas    = jsonDinamico.frames?.length > 0 && jsonDinamico.frames[0].zona !== undefined;
             const temDistFace = jsonDinamico.frames?.length > 0 && jsonDinamico.frames[0].distRelFace !== undefined;
@@ -48,4 +45,4 @@ async function carregarReferenciasDinamicas() {
     }
 }
 
-carregarReferenciasDinamicas()
+carregarReferenciasDinamicas();

@@ -7,7 +7,6 @@ const canvasElement = document.querySelector('.output_canvas');
 const canvasCtx = canvasElement.getContext('2d');
 const statusText = document.getElementById('status');
 
-// Configurar o motor HOLISTIC (Corpo + Mãos integrados)
 const holistic = new Holistic({
     locateFile: (file) => {
         return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
@@ -15,23 +14,20 @@ const holistic = new Holistic({
 });
 
 holistic.setOptions({
-    modelComplexity: 1, //0 = Rápido/Impreciso, 1 = Equilibrado, 2 = Pesado/Preciso
+    modelComplexity: 1, // 0 = Rápido/Impreciso, 1 = Equilibrado, 2 = Pesado/Preciso
     smoothLandmarks: true,
-    enableSegmentation: false, //nao precisamos de recortar o fundo (gasta CPU)
-    refineFaceLandmarks: false, //desliga os 468 pontos da cara para não matar a latência!
-    minDetectionConfidence: 0.76,//limite de exigência (de 0.0 a 1.0) para a deteção inicial da mão, ao que neste momento é se 85% de certeza absoluta que a distorção de pixeis é uma mão humana
+    enableSegmentation: false,
+    refineFaceLandmarks: false,
+    minDetectionConfidence: 0.76,
     minTrackingConfidence: 0.8
 });
 
-// Vê o momento exato em que a câmara descobre a sua própria resolução
 videoElement.addEventListener('loadedmetadata', () => {
-    //Obrigamos o Canvas (onde desenhamos os pontos) a ter a resolução real
     canvasElement.width = videoElement.videoWidth;
     canvasElement.height = videoElement.videoHeight;
     console.log(`[SISTEMA] Câmara e Canvas sincronizados a: ${canvasElement.width}x${canvasElement.height}`);
 });
 
-// Deixa o browser decidir a resolução nativa ótima.
 const camera = new Camera(videoElement, {
     onFrame: async () => {
         await holistic.send({ image: videoElement });
@@ -45,42 +41,39 @@ camera.start();
 // =========================================================================
 
 let ultimaMaoDetetada = null;
-let ultimaLabelMao = null; // Saber se é dir/esq para a gravação
-let ultimaPoseDetetada = null; // Memória do corpo
+let ultimaLabelMao = null;
+let ultimaPoseDetetada = null;
 let estadoApp = null;
-// Variável global para sabermos o que o sistema está a procurar
 let gestoAlvo = "Numero_1";
-// Variáveis de Telemetria (Performance)
+
 let ultimoTempo = performance.now();
 let contadorFrames = 0;
 let fpsAtuais = 0;
 
-let ultimoPulsoCru = { 'Right': null, 'Left': null }; // Mantido para compatibilidade (não usado no DTW)
+let ultimoPulsoCru = { 'Right': null, 'Left': null };
 
-
-// #my_code: Máquina de Estados: Segmentação Híbrida Adaptativa ---
+// #my_code: Máquina de Estados — Segmentação Híbrida Adaptativa
 // Estado de cada mão: 'REPOUSO' | 'GRAVANDO' | 'DEBOUNCE'
 let estadoSegmentacao = { 'Right': 'REPOUSO', 'Left': 'REPOUSO' };
 let timerDebounce = { 'Right': null, 'Left': null };
-const DEBOUNCE_MS = 400; // ms de espera após repouso antes de disparar FastDTW
+const DEBOUNCE_MS = 400; // ms de espera após repouso antes de disparar o DTW
 
-// Prioridade de mão: apenas 1 mão ativa o DTW de cada vez (gestos unimanual)
+// Prioridade de mão: apenas 1 mão ativa o DTW de cada vez (gestos unimanuais)
 let maoAtivaDTW = null; // 'Right' | 'Left' | null
 
-// --- Gravação dinâmica com contagem decrescente (Tecla R) ---
-let contadorRegressivo = 0;  // 0 = inativo; >0 = a contar
-let timerContagem = null;    // referência ao setInterval da contagem
+// Gravação dinâmica com contagem decrescente (Tecla R)
+let contadorRegressivo = 0;
+let timerContagem = null;
 
-// --- Variáveis Globais para a Gravação DTW ---
+// Variáveis globais para gravação DTW
 let aGravarDinamico = false;
 let bufferGravacao = [];
 let nomeGestoGravacao = "";
 
-let TAMANHO_MAX_BUFFER = 150; // Equivale a cerca de 5 segundos a 30fps (gestos lentos)
-let bufferMaoDireita = []; // memória temporal
+let TAMANHO_MAX_BUFFER = 150; // ~5 segundos a 30fps
+let bufferMaoDireita = [];
 let bufferMaoEsquerda = [];
 
-// Carregar memória ou pedir calibração
 inicializarCalibracao();
 
 
@@ -89,7 +82,6 @@ inicializarCalibracao();
 // =========================================================================
 
 holistic.onResults((results) => {
-    // Cálculo / FPS
     const tempoAtual = performance.now();
     contadorFrames++;
     if (tempoAtual - ultimoTempo >= 1000) {
@@ -117,20 +109,16 @@ holistic.onResults((results) => {
         maoParaFantasma = 'Right';
     }
 
-    // LER O BOTAO DAS DEFINICOES
     const mostrarFantasma = document.getElementById('toggle-fantasma') ? document.getElementById('toggle-fantasma').checked : true;
     const mostrarZonas = document.getElementById('toggle-zonas') ? document.getElementById('toggle-zonas').checked : true;
 
-    // desenha o esqueleto da mao fantasma apenas se a opção estiver ativada
     if (estadoApp === "AVALIACAO" && gestoAlvo !== null && maoParaFantasma !== null && mostrarFantasma) {
         desenharEsqueletoFantasma(canvasCtx, canvasElement.width, canvasElement.height, gestoAlvo, maoParaFantasma);
     }
 
-    // desenho do corpo na camada acima
     if (poseCorpo) {
-        ultimaPoseDetetada = poseCorpo; // Guardar memória do corpo
+        ultimaPoseDetetada = poseCorpo;
 
-        // Desenha as Bounding Boxes de Debug ANTES do esqueleto do corpo (para ficarem no fundo)
         if (mostrarZonas) {
             desenharZonasArticulacao(canvasCtx, poseCorpo, canvasElement.width, canvasElement.height);
         }
@@ -141,25 +129,21 @@ holistic.onResults((results) => {
         ultimaPoseDetetada = null;
     }
 
-    // Processar a mão direita
     if (maoDireita) {
         ultimaMaoDetetada = maoDireita;
         ultimaLabelMao = 'Right';
         statusDireita = processarMaoUnificada(canvasCtx, maoDireita, 'Right', poseCorpo, '#00FF00');
     } else {
-        // MÃO DIREITA NÃO DETETADA (utilizador sentado: mão no colo)
         if ((estadoApp === "AVALIACAO_DINAMICA" || estadoApp === "GRAVACAO_DINAMICA") && estadoSegmentacao['Right'] === 'GRAVANDO') {
-            // Transição GRAVANDO → DEBOUNCE: aguardar antes de avaliar
             estadoSegmentacao['Right'] = 'DEBOUNCE';
             if (!timerDebounce['Right']) {
                 timerDebounce['Right'] = setTimeout(() => { dispararAvaliacaoDTW('Right'); }, DEBOUNCE_MS);
             }
         } else if (estadoApp !== "AVALIACAO_DINAMICA" && estadoApp !== "GRAVACAO_DINAMICA") {
-            bufferMaoDireita = []; // Limpar normalmente nos outros modos
+            bufferMaoDireita = [];
         }
     }
 
-    // Processar a mão esquerda
     if (maoEsquerda) {
         if (!maoDireita) {
             ultimaMaoDetetada = maoEsquerda;
@@ -167,7 +151,6 @@ holistic.onResults((results) => {
         }
         statusEsquerda = processarMaoUnificada(canvasCtx, maoEsquerda, 'Left', poseCorpo, '#00BFFF');
     } else {
-        // MÃO ESQUERDA NÃO DETETADA (utilizador sentado: mão no colo)
         if ((estadoApp === "AVALIACAO_DINAMICA" || estadoApp === "GRAVACAO_DINAMICA") && estadoSegmentacao['Left'] === 'GRAVANDO') {
             estadoSegmentacao['Left'] = 'DEBOUNCE';
             if (!timerDebounce['Left']) {
@@ -178,7 +161,6 @@ holistic.onResults((results) => {
         }
     }
 
-    // Atualiza interface
     if (estadoApp === "CALIBRACAO") {
         if (maoDireita || maoEsquerda) {
             const maoPrincipal = maoDireita || maoEsquerda;
@@ -198,13 +180,12 @@ holistic.onResults((results) => {
                 statusText.style.color = "#00FF00";
             }
         } else if (!maoDireita && !maoEsquerda) {
-            // quando nao ha maoes voltar tudo a 0
-            if (gestoAlvo !== null) statusText.innerText = ""; // Mantém o ecrã limpo na aprendizagem
-            else {
+            if (gestoAlvo !== null) {
+                statusText.innerText = "";
+            } else {
                 statusText.innerText = "Nenhuma mão visível.";
                 statusText.style.color = "#ff9800";
             }
-            // função de reset
             resetFeedbackHTML();
         } else {
             statusText.innerText = "";
@@ -227,9 +208,8 @@ function normalizarLandmarks(landmarks, larguraCamara, alturaCamara) {
     const altura = alturaCamara || videoElement.videoHeight || 480;
     const proporcaoCamara = largura / altura;
 
-    // Corrigir o eixo x para anular a distorção do retângulo
     const pontosCorrigidos = landmarks.map(ponto => ({
-        x: ponto.x * proporcaoCamara, // Esticamos o x para ser igual ao y
+        x: ponto.x * proporcaoCamara,
         y: ponto.y,
         z: ponto.z
     }));
@@ -237,12 +217,10 @@ function normalizarLandmarks(landmarks, larguraCamara, alturaCamara) {
     const pulso = pontosCorrigidos[0];
     const baseMedio = pontosCorrigidos[9];
 
-    // Euclidiana que mede em linha reta o "osso" da palma da mão.
     const tamanhoPalma = Math.sqrt(
         Math.pow(baseMedio.x - pulso.x, 2) + Math.pow(baseMedio.y - pulso.y, 2)
     );
 
-    // Normalizamos a translação e escala
     return pontosCorrigidos.map(ponto => ({
         x: (ponto.x - pulso.x) / tamanhoPalma,
         y: (ponto.y - pulso.y) / tamanhoPalma,
@@ -257,10 +235,10 @@ function processarMaoUnificada(canvasCtx, mao, labelMao, poseCorpo, corConector)
     drawConnectors(canvasCtx, mao, HAND_CONNECTIONS, { color: corConector, lineWidth: 5 });
     drawLandmarks(canvasCtx, mao, { color: '#FF0000', lineWidth: 2 });
 
-    // ── 1. CONSTRUIR FRAME  {mao, zona, corpo, distRelFace} ──
+    // ── 1. CONSTRUIR FRAME {mao, zona, corpo, distRelFace} ──
     const maoNormalizada = normalizarLandmarks(mao, canvasElement.width, canvasElement.height);
 
-    // Espelhar mão esquerda para comparação com moldes gravados com a mão direita.
+    // Espelhar mão esquerda para comparação com moldes gravados com a mão direita
     const maoParaDTW = (labelMao === 'Left')
         ? maoNormalizada.map(p => ({ x: -p.x, y: p.y, z: p.z }))
         : maoNormalizada;
@@ -276,18 +254,17 @@ function processarMaoUnificada(canvasCtx, mao, labelMao, poseCorpo, corConector)
         };
         zonaFrame = identificarZonaArticulacao(mao, poseCorpo);
     }
+
     const frameEnriquecida = {
         mao: maoParaDTW,
         zona: zonaFrame,
         corpo: corpoRawFrame,
-        // Distâncias relativas ao nariz, ouvidos e boca (pose landmarks já calculados, custo zero)
         distRelFace: calcularDistRelFace(mao[0].x, mao[0].y, poseCorpo, labelMao)
     };
 
-    // ── 3. SEGMENTAÇÃO HÍBRIDA ADAPTATIVA ──
+    // ── 2. SEGMENTAÇÃO HÍBRIDA ADAPTATIVA ──
     if (estadoApp === "AVALIACAO_DINAMICA" || estadoApp === "GRAVACAO_DINAMICA") {
         const bufferAtual = labelMao === 'Right' ? bufferMaoDireita : bufferMaoEsquerda;
-        // Abdómen funciona como zona de repouso para os gestos dinâmicos!
         const emReposoPorZona = (zonaFrame === "FORA" || zonaFrame === "ABDOMEN");
 
         if (emReposoPorZona) {
@@ -325,8 +302,7 @@ function processarMaoUnificada(canvasCtx, mao, labelMao, poseCorpo, corConector)
         }
     }
 
-    // ── 4. AVALIAÇÃO ESTÁTICA ──
-    let statusTexto = "";
+    // ── 3. AVALIAÇÃO ESTÁTICA ──
     if (estadoApp === "AVALIACAO") {
         const res = classificarGestoPorReferencia(
             mao,
@@ -338,13 +314,12 @@ function processarMaoUnificada(canvasCtx, mao, labelMao, poseCorpo, corConector)
         );
 
         if (res && res.debug) {
-            let statusGeral = res.reconhecido ? `Correto! (${res.reconhecido})` : `A tentar: ${typeof gestoAlvo !== 'undefined' ? gestoAlvo : '...'}`;
             let mensagemAlerta = "";
 
             if (!res.reconhecido) {
                 if (res.debug.zonaAlvo && res.debug.zonaAlvo !== "DESCONHECIDA" && res.debug.zonaAtual !== res.debug.zonaAlvo) {
                     if (res.debug.zonaAtual === "FORA") {
-                        mensagemAlerta = "<=>TRAZ A MÃO PARA A FRENTE DO CORPO!";
+                        mensagemAlerta = "<=> TRAZ A MÃO PARA A FRENTE DO CORPO!";
                     } else {
                         const ordemZonas = ["TESTA", "QUEIXO", "PEITO", "ABDOMEN"];
                         const indiceAtual = ordemZonas.indexOf(res.debug.zonaAtual);
@@ -356,14 +331,12 @@ function processarMaoUnificada(canvasCtx, mao, labelMao, poseCorpo, corConector)
                             mensagemAlerta = "v BAIXA A MÃO PARA A ZONA: " + res.debug.zonaAlvo;
                         }
                     }
-                }
-                else if (res.debug.erroMaximo > 0.30) {
+                } else if (res.debug.erroMaximo > 0.30) {
                     mensagemAlerta = `AJUSTA O ${res.debug.nomePontoErrado.toUpperCase()}!`;
                 }
             }
 
             if (gestoAlvo !== null) {
-                statusTexto = mensagemAlerta;
                 const angIdeal = parseFloat(res.debug.anguloIdeal);
                 const angAtual = parseFloat(res.debug.anguloAtual);
                 let anguloVisualIdeal = labelMao === 'Right' ? 180 - angIdeal : angIdeal;
@@ -375,19 +348,11 @@ function processarMaoUnificada(canvasCtx, mao, labelMao, poseCorpo, corConector)
                 }
 
                 atualizarFeedbackHTML(res.erro, angAtual.toFixed(1), angIdeal.toFixed(1), mensagemAlerta, res.reconhecido);
-            } else {
-                const prefixo = labelMao === 'Right' ? 'DIR:' : 'ESQ:';
-                statusTexto = `${prefixo} ${statusGeral} (Erro: ${(res.erro * 100).toFixed(1)}%)`;
-                if (mensagemAlerta !== "") statusTexto += ` | ${mensagemAlerta}`;
-                statusTexto += `\n↳ Angulo: ${res.debug.anguloAtual}º | Alvo: ${res.debug.anguloIdeal}º`;
             }
-        } else if (res && res.reconhecido) {
-            const prefixo = labelMao === 'Right' ? 'DIR:' : 'ESQ:';
-            statusTexto = `${prefixo} ${res.reconhecido} (${(res.erro * 100).toFixed(1)}%)`;
-        }
 
-        if (res && res.todosResultados) {
-            atualizarPainelTelemetria(res.todosResultados, res.reconhecido);
+            if (res && res.todosResultados) {
+                atualizarPainelTelemetria(res.todosResultados, res.reconhecido);
+            }
         }
     }
 }
@@ -398,7 +363,6 @@ function processarMaoUnificada(canvasCtx, mao, labelMao, poseCorpo, corConector)
 function dispararAvaliacaoDTW(labelMao) {
     const bufferAtual = labelMao === 'Right' ? bufferMaoDireita : bufferMaoEsquerda;
 
-    // Resetar o estado desta mão e libertar a prioridade
     estadoSegmentacao[labelMao] = 'REPOUSO';
     timerDebounce[labelMao] = null;
     maoAtivaDTW = null;
@@ -416,7 +380,7 @@ function dispararAvaliacaoDTW(labelMao) {
             document.getElementById('titulo-gesto').style.color = "white";
         }
         bufferAtual.length = 0;
-        estadoApp = "AVALIACAO_DINAMICA"; // Retorna ao modo normal
+        estadoApp = "AVALIACAO_DINAMICA";
         return;
     }
 
@@ -434,7 +398,7 @@ function dispararAvaliacaoDTW(labelMao) {
     let menorErroDTW = Infinity;
     let gestoReconhecido = null;
     for (const moldeDinamico of BASE_DADOS_DINAMICA) {
-        const erroDTW = calcularFastDTW(bufferAtual, moldeDinamico.frames);
+        const erroDTW = calcularDTW(bufferAtual, moldeDinamico.frames);
         if (erroDTW < menorErroDTW) {
             menorErroDTW = erroDTW;
             gestoReconhecido = moldeDinamico.nome;
@@ -449,7 +413,7 @@ function dispararAvaliacaoDTW(labelMao) {
         console.log(`%c [DTW] ✓ ${gestoReconhecido} (Erro: ${menorErroDTW.toFixed(3)})`, 'color:green;font-weight:bold');
         tituloHtml.innerText = `Detetado: ${gestoReconhecido}!`;
         tituloHtml.style.color = '#4CAF50';
-        telemetriaHtml.innerHTML = `<li><span style="color:#4CAF50">${gestoReconhecido}</span></li><li style="font-size:12px;color:gray">Erro FastDTW: ${menorErroDTW.toFixed(3)}</li>`;
+        telemetriaHtml.innerHTML = `<li><span style="color:#4CAF50">${gestoReconhecido}</span></li><li style="font-size:12px;color:gray">Erro DTW: ${menorErroDTW.toFixed(3)}</li>`;
     } else {
         console.log(`[DTW] ✗ Melhor: ${gestoReconhecido} (Erro: ${menorErroDTW.toFixed(3)})`);
         tituloHtml.innerText = "Gesto não reconhecido";
@@ -636,13 +600,20 @@ function atualizarFeedbackHTML(erroDecimal, angAtual, angIdeal, mensagemAlerta, 
     if (!painel || !barra) return;
     painel.style.display = 'block';
 
-    const erroMaximo = 0.40; const erroMinimo = 0.10;
+    const erroMaximo = 0.40;
+    const erroMinimo = 0.10;
     let progresso = (erroMaximo - erroDecimal) / (erroMaximo - erroMinimo);
     progresso = Math.max(0, Math.min(1, progresso));
 
-    let corBarra = "#FF3333"; let textoFeedback = "LONGE...";
-    if (erroDecimal <= 0.10) { corBarra = "#00FF00"; textoFeedback = "FEITO!"; }
-    else if (erroDecimal <= 0.25) { corBarra = "#FFA500"; textoFeedback = "QUASE LÁ!"; }
+    let corBarra = "#FF3333";
+    let textoFeedback = "LONGE...";
+    if (erroDecimal <= 0.10) {
+        corBarra = "#00FF00";
+        textoFeedback = "FEITO!";
+    } else if (erroDecimal <= 0.25) {
+        corBarra = "#FFA500";
+        textoFeedback = "QUASE LÁ!";
+    }
 
     barra.style.width = (progresso * 100) + "%";
     barra.style.backgroundColor = corBarra;
@@ -712,7 +683,6 @@ function atualizarPainelTelemetria(resultados, gestoReconhecido) {
 // 6. NAVEGAÇÃO DE MENUS & ROTEAMENTO (UI)
 // =========================================================================
 
-/** Esconde todos os menus de navegação */
 function esconderTodosOsMenus() {
     const ids = [
         'view-menu-principal',
@@ -731,7 +701,6 @@ function esconderTodosOsMenus() {
     document.getElementById('painel-telemetria').style.display = 'none';
 }
 
-// ── Menu Principal ──
 function voltarAoMenuPrincipal() {
     esconderTodosOsMenus();
     document.getElementById('view-menu-principal').style.display = 'block';
@@ -739,7 +708,6 @@ function voltarAoMenuPrincipal() {
     estadoApp = null;
 }
 
-// ── Aprendizagem ──
 function abrirMenuAprendizagem() {
     esconderTodosOsMenus();
     document.getElementById('view-menu-aprendizagem').style.display = 'block';
@@ -761,7 +729,6 @@ function voltarParaAprendizagem() {
     gestoAlvo = null;
 }
 
-// ── Avaliação ──
 function abrirMenuAvaliacao() {
     esconderTodosOsMenus();
     document.getElementById('view-menu-avaliacao').style.display = 'block';
@@ -783,7 +750,6 @@ function voltarParaAvaliacao() {
     gestoAlvo = null;
 }
 
-// ── Modos de câmara ──
 function abrirModoLivre() {
     gestoAlvo = null;
     esconderTodosOsMenus();
@@ -792,7 +758,6 @@ function abrirModoLivre() {
     document.getElementById('painel-telemetria').style.display = 'block';
     estadoApp = "AVALIACAO";
 
-    // Desativar ajudas no modo avaliação
     const btnDefinicoes = document.getElementById('btn-definicoes-camara');
     if (btnDefinicoes) btnDefinicoes.style.display = 'none';
     const cartaoRef = document.getElementById('cartao-referencia');
@@ -810,11 +775,9 @@ function abrirModoLivre() {
 function iniciarTreino(nomeGesto) {
     gestoAlvo = nomeGesto;
 
-    // Detetar automaticamente se o gesto é dinâmico (Letra_D, Letra_K, Letra_W, Letra_Y, Letra_Z)
     const esDinamico = typeof LETRAS_DINAMICAS !== 'undefined' && LETRAS_DINAMICAS.includes(nomeGesto.split('_V')[0]);
     estadoApp = esDinamico ? "AVALIACAO_DINAMICA" : "AVALIACAO";
 
-    // Resetar o estado da segmentação para gestos dinâmicos
     if (esDinamico) {
         bufferMaoDireita = [];
         bufferMaoEsquerda = [];
@@ -825,7 +788,7 @@ function iniciarTreino(nomeGesto) {
 
     esconderTodosOsMenus();
     document.getElementById('view-camara').style.display = 'block';
-    document.getElementById('painel-progresso').style.display = esDinamico ? 'none' : 'none';
+    document.getElementById('painel-progresso').style.display = 'none';
     document.getElementById('titulo-gesto').innerText = `A aprender: ${nomeGesto.replace(/_/g, ' ')}`;
 
     const btnDefinicoes = document.getElementById('btn-definicoes-camara');
@@ -844,7 +807,7 @@ function iniciarTreino(nomeGesto) {
             } else if (nomeBaseGesto.startsWith("Letra")) {
                 subPasta = "abcedario/";
             }
-            imgRef.src = `referenciaphotos/${subPasta}${nomeBaseGesto}.png`;
+            imgRef.src = `./referencia/referenciaphotos/${subPasta}${nomeBaseGesto}.png`;
             cartaoRef.style.display = 'block';
         } else {
             cartaoRef.style.display = 'none';
@@ -852,15 +815,13 @@ function iniciarTreino(nomeGesto) {
     }
 }
 
-// #my_code: Lógica dedicada para o Modo de Avaliação (sem ajudas visuais / "Modo Exame")
+// #my_code: Lógica dedicada para o Modo de Avaliação (sem ajudas visuais)
 function iniciarAvaliacao(nomeGesto) {
     gestoAlvo = nomeGesto;
 
-    // Detetar automaticamente se o gesto é dinâmico
     const esDinamico = typeof LETRAS_DINAMICAS !== 'undefined' && LETRAS_DINAMICAS.includes(nomeGesto.split('_V')[0]);
     estadoApp = esDinamico ? "AVALIACAO_DINAMICA" : "AVALIACAO";
 
-    // Resetar o estado da segmentação para gestos dinâmicos
     if (esDinamico) {
         bufferMaoDireita = [];
         bufferMaoEsquerda = [];
@@ -874,7 +835,6 @@ function iniciarAvaliacao(nomeGesto) {
     document.getElementById('painel-progresso').style.display = 'none';
     document.getElementById('titulo-gesto').innerText = `A avaliar: ${nomeGesto.replace(/_/g, ' ')}`;
 
-    // Desativar ajudas no modo avaliação
     const btnDefinicoes = document.getElementById('btn-definicoes-camara');
     if (btnDefinicoes) btnDefinicoes.style.display = 'none';
     const cartaoRef = document.getElementById('cartao-referencia');
@@ -899,7 +859,6 @@ function voltarAoMenu() {
     const btnDefinicoes = document.getElementById('btn-definicoes-camara');
     if (btnDefinicoes) btnDefinicoes.style.display = 'none';
 
-    // Volta ao menu principal
     document.getElementById('view-menu-principal').style.display = 'block';
     gestoAlvo = null;
     estadoApp = null;
@@ -923,7 +882,6 @@ function abrirModoDinamico() {
     bufferMaoDireita = [];
     bufferMaoEsquerda = [];
 
-    // Desativar ajudas no modo avaliação
     const btnDefinicoes = document.getElementById('btn-definicoes-camara');
     if (btnDefinicoes) btnDefinicoes.style.display = 'none';
     const cartaoRef = document.getElementById('cartao-referencia');
@@ -943,16 +901,12 @@ function abrirDefinicoes() {
 }
 
 function fecharDefinicoes() {
-    // Esconde o menu de definições
     document.getElementById('modal-definicoes').style.display = 'none';
 
-    // Lemos o estado atual do botão da imagem nas definições
     const mostrarImagem = document.getElementById('toggle-imagem') ? document.getElementById('toggle-imagem').checked : true;
     const cartaoRef = document.getElementById('cartao-referencia');
 
-    // Atualizamos a visibilidade da imagem IMEDIATAMENTE no HTML
     if (cartaoRef) {
-        // Só volta a aparecer se a checkbox estiver ativa E se não estivermos no Modo Livre (onde gestoAlvo é null)
         if (mostrarImagem && gestoAlvo !== null) {
             cartaoRef.style.display = 'block';
         } else {
@@ -1025,7 +979,7 @@ function exportarGestoDinamico(buffer, nomeGesto) {
     console.log(`[DATA LOGGER] Gesto DINÂMICO '${nomeGesto}' exportado: ${buffer.length} frames | Formato v3 | Zonas: ${temDadosCorporais ? '✅' : '⚠️ re-gravar com corpo visível'}`);
 }
 
-// Ouvir gravação estática (Tecla S)
+// Gravação estática (Tecla S)
 document.addEventListener('keydown', function (event) {
     if (event.key === 's' || event.key === 'S') {
         if (ultimaMaoDetetada && ultimaPoseDetetada && ultimaLabelMao) {
@@ -1039,8 +993,8 @@ document.addEventListener('keydown', function (event) {
     }
 });
 
-// Ouvir gravação dinâmica (Tecla R)
-document.addEventListener('keydown', function(event) {
+// Gravação dinâmica (Tecla R)
+document.addEventListener('keydown', function (event) {
     if (event.key === 'r' || event.key === 'R') {
         if (contadorRegressivo > 0) return;
 
@@ -1085,29 +1039,17 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+
 // =========================================================================
 // 8. LISTENERS DE INTERFACE
 // =========================================================================
 
-// Atualizar Imagem de Referência em tempo real
 const toggleImagem = document.getElementById('toggle-imagem');
 if (toggleImagem) {
-    toggleImagem.addEventListener('change', function() {
+    toggleImagem.addEventListener('change', function () {
         const cartaoRef = document.getElementById('cartao-referencia');
         if (cartaoRef) {
-            // Se estiver marcado, mostra (block), senão esconde (none)
             cartaoRef.style.display = this.checked ? 'block' : 'none';
         }
-    });
-}
-
-// Atualizar Barra de Progresso em tempo real (opcional, caso queiras dar toggle a isto no futuro)
-const toggleZonas = document.getElementById('toggle-zonas');
-if (toggleZonas) {
-    toggleZonas.addEventListener('change', function() {
-        // Para os elementos do Canvas (Fantasma, Zonas, Bússola), o MediaPipe
-        // já desenha em loop constante. Como tu lês o 'checked' a cada frame
-        // dentro da função onResults (linha 115), eles deviam atualizar-se
-        // praticamente em tempo real.
     });
 }

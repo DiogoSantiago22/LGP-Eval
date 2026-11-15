@@ -1,5 +1,11 @@
 # LGP-Eval
 
+**[Experimentar a Demo Online](https://diogosantiago22.github.io/LGP-Eval/)**
+
+Aplicação web de aprendizagem e avaliação de gestos da **Língua Gestual Portuguesa (LGP)** em tempo real, usando apenas uma webcam. Projeto final da Licenciatura em Engenharia Informática e Multimédia (LEIM), ISEL, 2025/2026.
+
+Em vez de se limitar a dizer se um gesto foi reconhecido, o LGP-Eval diz **o que corrigir**: a posição de um dedo, a inclinação do pulso ou a zona do corpo onde o gesto é feito.
+
 Aplicação web de aprendizagem e avaliação de gestos da **Língua Gestual Portuguesa (LGP)** em tempo real, usando apenas uma webcam. Projeto final da Licenciatura em Engenharia Informática e Multimédia (LEIM), ISEL, 2025/2026.
 
 Em vez de se limitar a dizer se um gesto foi reconhecido, o LGP-Eval diz **o que corrigir**: a posição de um dedo, a inclinação do pulso ou a zona do corpo onde o gesto é feito.

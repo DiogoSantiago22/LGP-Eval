@@ -1,6 +1,5 @@
 let BASE_DADOS_REFERENCIAS = [];
 
-// Números (pasta: referencia_numeros/)
 const NUMEROS_A_CARREGAR = [
     "Numero_0", "Numero_0_V1", "Numero_0_V2",
     "Numero_1", "Numero_1_V1", "Numero_1_V2",
@@ -14,10 +13,7 @@ const NUMEROS_A_CARREGAR = [
     "Numero_9", "Numero_9_V1", "Numero_9_V2"
 ];
 
-// Letras estáticas (pasta: referencia_letras/)
-// As que têm _dinamico.json são tratadas à parte (gestos dinâmicos)
 const LETRAS_ESTATICAS = [
-    // Letras Base
     "Letra_A", "Letra_B", "Letra_C", "Letra_E",
     "Letra_F", "Letra_G", "Letra_H", "Letra_I",
     "Letra_J", "Letra_L", "Letra_M", "Letra_N",
@@ -25,16 +21,15 @@ const LETRAS_ESTATICAS = [
     "Letra_S", "Letra_T", "Letra_U", "Letra_V",
     "Letra_X",
 
-    // V1
-    "Letra_A_V1",  "Letra_C_V1",
+    "Letra_A_V1", "Letra_C_V1",
     "Letra_G_V1", "Letra_H_V1", "Letra_I_V1",
-     "Letra_L_V1", "Letra_M_V1", "Letra_N_V1",
-    "Letra_O_V1",  "Letra_Q_V1", "Letra_R_V1",
+    "Letra_L_V1", "Letra_M_V1", "Letra_N_V1",
+    "Letra_O_V1", "Letra_Q_V1", "Letra_R_V1",
     "Letra_S_V1", "Letra_U_V1", "Letra_V_V1",
     "Letra_X_V1"
 ];
 
-// Letras dinâmicas (usarão o motor FastDTW — serão implementadas depois)
+// Letras dinâmicas (motor DTW com banda de Sakoe-Chiba)
 const LETRAS_DINAMICAS = ["Letra_D", "Letra_K", "Letra_W", "Letra_Y", "Letra_Z"];
 
 async function carregarFicheiro(nomeGesto, pasta) {
