@@ -8,9 +8,7 @@ const canvasCtx = canvasElement.getContext('2d');
 const statusText = document.getElementById('status');
 
 const holistic = new Holistic({
-    locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
-    }
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/${file}`
 });
 
 holistic.setOptions({
@@ -165,7 +163,7 @@ holistic.onResults((results) => {
         if (maoDireita || maoEsquerda) {
             const maoPrincipal = maoDireita || maoEsquerda;
             const label = maoDireita ? 'Right' : 'Left';
-            executarCalibracaoUI(maoPrincipal, label, canvasCtx, canvasElement.width, canvasElement.height);
+            executarCalibracaoUI(maoPrincipal, canvasCtx, largura, altura);
         } else {
             desenharCaixaEspera(canvasCtx, canvasElement.width, canvasElement.height);
             statusText.innerText = "Coloque a mão na caixa para calibrar...";
