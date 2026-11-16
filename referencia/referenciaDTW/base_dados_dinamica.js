@@ -3,12 +3,11 @@ let BASE_DADOS_DINAMICA = [];
 const GESTOS_DINAMICOS_A_CARREGAR = [
     "Branco_v1",
     "Branco_v2",
-    "Branco_v4",
     "Branco_v3",
+    "Branco_v4",
     "Branco_v5",
     "Dor_v1",
     "Dor_v2",
-    "Dor_v3",
     "Fixe_v1",
     "Fixe_v2",
     "Mascara_v1",
@@ -21,13 +20,18 @@ const GESTOS_DINAMICOS_A_CARREGAR = [
 ];
 
 async function carregarReferenciasDinamicas() {
-    console.log("[SISTEMA] A carregar pacotes DTW de referenciaDTW...");
+    console.log("[SISTEMA] A carregar pacotes DTW...");
+    BASE_DADOS_DINAMICA = [];
+    const cacheBuster = Date.now();
 
-    for (const nomeGesto of GESTOS_DINAMICOS_A_CARREGAR) {
+    const promessas = GESTOS_DINAMICOS_A_CARREGAR.map(async (nomeGesto) => {
+        // Letra_D_dinamico.json encontra-se em referencia/referencia_letras
+        const pasta = nomeGesto === "Letra_D"
+            ? "referencia/referencia_letras"
+            : "referencia/referenciaDTW";
+        const caminhoFicheiro = `./${pasta}/${nomeGesto}_dinamico.json?v=${cacheBuster}`;
+
         try {
-            const cacheBuster = new Date().getTime();
-            const caminhoFicheiro = `./referenciaDTW/${nomeGesto}_dinamico.json?v=${cacheBuster}`;
-
             const resposta = await fetch(caminhoFicheiro);
             if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
 
@@ -42,7 +46,10 @@ async function carregarReferenciasDinamicas() {
         } catch (erro) {
             console.error(`[DTW] Falha ao carregar ${nomeGesto}:`, erro);
         }
-    }
+    });
+
+    await Promise.all(promessas);
+    console.log(`[SISTEMA] Pacotes DTW prontos. ${BASE_DADOS_DINAMICA.length} gestos dinâmicos carregados.`);
 }
 
 carregarReferenciasDinamicas();

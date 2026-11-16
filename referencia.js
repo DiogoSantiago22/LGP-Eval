@@ -2,14 +2,14 @@ let BASE_DADOS_REFERENCIAS = [];
 
 const NUMEROS_A_CARREGAR = [
     "Numero_0", "Numero_0_V1", "Numero_0_V2",
-    "Numero_1", "Numero_1_V1", "Numero_1_V2",
-    "Numero_2", "Numero_2_V1", "Numero_2_V2",
+    "Numero_1_V1", "Numero_1_V2",
+    "Numero_2_V1", "Numero_2_V2",
     "Numero_3", "Numero_3_V1", "Numero_3_V2",
     "Numero_4", "Numero_4_V1", "Numero_4_V2",
     "Numero_5", "Numero_5_V1", "Numero_5_V2",
     "Numero_6", "Numero_6_V1", "Numero_6_V2",
-    "Numero_7", "Numero_7_V1", "Numero_7_V2", "Numero_7_V3",
-    "Numero_8", "Numero_8_V1", "Numero_8_V2",
+    "Numero_7", "Numero_7_V2",
+    "Numero_8", "Numero_8_V2",
     "Numero_9", "Numero_9_V1", "Numero_9_V2"
 ];
 
@@ -19,23 +19,15 @@ const LETRAS_ESTATICAS = [
     "Letra_J", "Letra_L", "Letra_M", "Letra_N",
     "Letra_O", "Letra_P", "Letra_Q", "Letra_R",
     "Letra_S", "Letra_T", "Letra_U", "Letra_V",
-    "Letra_X",
-
-    "Letra_A_V1", "Letra_C_V1",
-    "Letra_G_V1", "Letra_H_V1", "Letra_I_V1",
-    "Letra_L_V1", "Letra_M_V1", "Letra_N_V1",
-    "Letra_O_V1", "Letra_Q_V1", "Letra_R_V1",
-    "Letra_S_V1", "Letra_U_V1", "Letra_V_V1",
-    "Letra_X_V1"
+    "Letra_X"
 ];
 
 // Letras dinâmicas (motor DTW com banda de Sakoe-Chiba)
 const LETRAS_DINAMICAS = ["Letra_D", "Letra_K", "Letra_W", "Letra_Y", "Letra_Z"];
 
-async function carregarFicheiro(nomeGesto, pasta) {
+async function carregarFicheiro(nomeGesto, pasta, cacheBuster = Date.now()) {
     try {
-        const cacheBuster = new Date().getTime();
-        const caminho = `./${pasta}/${nomeGesto}_template.json?v=${cacheBuster}`;
+        const caminho = `./referencia/${pasta}/${nomeGesto}_template.json?v=${cacheBuster}`;
         const resposta = await fetch(caminho);
         if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
         const json = await resposta.json();
@@ -53,15 +45,18 @@ async function carregarFicheiro(nomeGesto, pasta) {
 
 async function carregarTodasAsReferencias() {
     console.log("[SISTEMA] A iniciar carregamento de referências...");
+    BASE_DADOS_REFERENCIAS = [];
+    const cacheBuster = Date.now();
 
-    for (const nome of NUMEROS_A_CARREGAR) {
-        await carregarFicheiro(nome, "referencia_numeros");
-    }
+    const promessasNumeros = NUMEROS_A_CARREGAR.map((nome) =>
+        carregarFicheiro(nome, "referencia_numeros", cacheBuster)
+    );
 
-    for (const nome of LETRAS_ESTATICAS) {
-        await carregarFicheiro(nome, "referencia_letras");
-    }
+    const promessasLetras = LETRAS_ESTATICAS.map((nome) =>
+        carregarFicheiro(nome, "referencia_letras", cacheBuster)
+    );
 
+    await Promise.all([...promessasNumeros, ...promessasLetras]);
     console.log(`[SISTEMA] Base de dados pronta. ${BASE_DADOS_REFERENCIAS.length} referências carregadas.`);
 }
 
